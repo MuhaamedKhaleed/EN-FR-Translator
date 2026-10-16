@@ -1,0 +1,45 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+env/
+venv/
+ENV/
+.env
+
+# Model weights, checkpoints, and outputs
+results/
+models/
+runs/
+*.pt
+*.pth
+*.bin
+*.safetensors
+
+# Dataset files
+*.csv
+*.tsv
+*.jsonl
+data/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Hugging Face cache
+.cache/
+
+# Logs
+*.log
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# IDE configs
+.idea/
+.vscode/
+*.swp
+# Keep the tiny sample dataset
+!examples/*.csv

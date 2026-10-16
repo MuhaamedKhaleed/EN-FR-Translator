@@ -1,0 +1,15 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      # persists the downloaded base model and any fine-tuned model between runs
+      - models:/models
+    restart: unless-stopped
+
+volumes:
+  models:
