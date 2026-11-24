@@ -24,3 +24,14 @@ uv run --no-sync python scripts/real_data.py --model ./real-source --data ./real
 ```
 
 The download is about300MB model bytes plus the8MB corpus; dependencies and output checkpoints need additional disk/RAM. Output directory must be new. Hash changes fail closed. `--cached /path/to/source-files` avoids network but still checks every file; the cached folder must have the official pytorch_model.bin plus tokenizer/config and fra-eng.zip. Data/model rights are separate from this repo's MIT code. The source corpus retains per-sentence attribution and its readme in the original archive. No benchmark or unseen-data claim.
+
+## Docker without a registry account
+
+This repository supplies a Dockerfile, not a published registry image. Build locally once. The default remains the small invented-input wiring demo. No account, paid service or automatic source download is required by the image.
+
+```sh
+docker build -f Dockerfile.ml -t project-ml .
+docker run --rm --network none project-ml
+```
+
+The image also includes `/app/scripts`. After explicit source preparation on the host, mount a new writable working directory and invoke the real script with `--entrypoint python`. Keep model/source mounts read-only when the script does not write beside them. The image uses uid10001, so grant that uid write access to the output folder, do not run the container as root to bypass this. Data/preprocessing scripts currently place artifacts beside source files; mount the working copy read-write and keep your original untouched. The environment disables Hugging Face downloads. Network-none is suitable only after sources/models are local; an explicit fetch helper needs network by design. CPU/dependency builds were checked on GitHub's Linux runner, not every laptop OS.
