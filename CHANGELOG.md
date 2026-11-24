@@ -13,3 +13,8 @@
 
 ### Unchanged
 - Existing MIT license. No main merge, tag, release, real-model/data upload or quality claims.
+
+
+### Engineering follow-up
+- Use the committed uv lock in CI and key dependency-installer caching by that lock.
+- Complete copy-only profile README drafts and clarify historical versus current verification.
