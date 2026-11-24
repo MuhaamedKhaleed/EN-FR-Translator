@@ -35,3 +35,10 @@ Source is adapted from the separately verified local Marian pipeline in the user
 No real English/French pretrained model evaluation, BLEU/chrF, human review, untouched domain/document-level test corpus, full fine-tuning, GPU/macOS/Windows/ARM verification, API, deployment, production throughput/resource caps or atomic artifact writes. Source-disjoint normalized sentences are not proof of document/domain independence. Validation loss is teacher-forced, not translation quality. CPU fine-tuning can take substantial time. All ML loads are local-only/safetensors; use trusted artifacts.
 
 Mechanics reference: https://huggingface.co/docs/transformers/v4.49.0/en/tasks/translation . This supports target-text tokenization and label-padding mechanics, not this repository's quality.
+
+
+## Gap-closure follow-up (24 November 2026)
+
+The CI source now uses uv 0.13.8 and the committed transitive lock, rather than a new pip resolution of direct pins. Dependency installer caching is keyed by uv.lock. The local matching command is `uv sync --locked --extra dev --extra ml`, followed by the existing tests/quality commands. This does not cache or publish private datasets, weights or model outputs. Public-repository-only guards remain. The changed workflow's hosted outcome must be checked after publication; prior green runs do not validate a changed workflow.
+
+A complete copy-only project-focused profile README draft is appended to presentation.md. No profile account edits, main merge, PR, release or license change is implied by that text. Historical notebook/full-data/quality limitations remain open, not replaced by a passing synthetic test.
