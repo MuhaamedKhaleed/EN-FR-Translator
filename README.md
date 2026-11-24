@@ -1,102 +1,85 @@
-# EN-FR-Translator
+# English/French Local Translator
 
-[![CI](https://github.com/MuhaamedKhaleed/EN-FR-Translator/actions/workflows/ci.yml/badge.svg)](https://github.com/MuhaamedKhaleed/EN-FR-Translator/actions)
-![Python](https://img.shields.io/badge/python-3.10%2B-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
-
-English → French machine translation. Fine-tune a pre-trained MarianMT model
-([`Helsinki-NLP/opus-mt-en-fr`](https://huggingface.co/Helsinki-NLP/opus-mt-en-fr)) on your own
-parallel corpus, evaluate it with BLEU/chrF, and serve it through a REST API or CLI.
-
-## Features
-
-- **Fine-tuning pipeline**: Hugging Face `Seq2SeqTrainer`, dynamic padding, mixed precision on GPU,
-  best checkpoint selected by validation BLEU.
-- **Data cleaning**: NaN/empty/duplicate removal, automatic UTF-8 → latin-1 fallback, deterministic train/validation split.
-- **Evaluation**: BLEU and chrF (SacreBLEU) on a held-out split.
-- **REST API**: FastAPI with `/translate` and `/health`, batching, and input limits.
-- **CLI**: `enfr train | evaluate | translate | serve`.
-- **Deployable**: multi-stage Dockerfile (non-root, healthcheck) and `docker-compose.yml`.
-- **Quality gates**: pytest suite, ruff lint/format, GitHub Actions CI.
+A local-only CLI for checking parallel CSV data, running an existing Marian translation model, and deliberately starting CPU fine-tuning. The repository previously advertised an implementation absent from its tracked source. This pass supplies a working local package and replaces unsupported API/evaluation claims with tested behavior. No pretrained model or corpus is bundled.
 
 ## Quick start
 
-### Docker (API)
+Python 3.11 or 3.12, Linux x86_64. Install uv first using its official instructions, then:
 
-```bash
-docker compose up --build
-curl -X POST localhost:8000/translate \
-  -H "Content-Type: application/json" \
-  -d '{"texts": ["Hello, how are you?"]}'
+```sh
+uv sync --locked --extra dev
+uv run enfr --help
+uv run enfr check-data --data examples/parallel.csv
+uv run enfr check-data --config .env.example
 ```
 
-The first start downloads the base model into the `models` volume, so it takes a minute.
+Actual example output:
 
-### Local
-
-```bash
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -e ".[train,api,dev]"
-
-enfr translate "I love learning languages."
-enfr serve                      # http://127.0.0.1:8000/docs
+```json
+{"pairs": 3, "train_pairs": 2, "validation_pairs": 1}
 ```
 
-## Fine-tuning on your data
+`source,target` are required UTF-8 CSV headers. Other uniquely named columns are allowed. Blank pairs, malformed rows, and repeated case/whitespace-normalized source sentences fail rather than being silently dropped. `--config` is an opt-in dotenv file with `PARALLEL_CSV`; explicit `--data` wins. No credentials or service calls are needed.
 
-Your CSV needs two columns: `English words/sentences` and `French words/sentences`
-(override with `--src-col` / `--tgt-col`). A 15-row example is in `examples/sample.csv`.
+The lock is scoped to Linux x86_64. Other operating systems are not verified. The ordinary install and Docker image provide **data checks only**, with no Torch import. Optional ML dependencies are much larger:
 
-```bash
-enfr train --data path/to/eng-french.csv --epochs 3 --batch-size 32
-enfr evaluate --data path/to/eng-french.csv
+```sh
+uv sync --locked --extra dev --extra ml
 ```
 
-The fine-tuned model and tokenizer are saved to `models/enfr-finetuned`. The API and CLI use it
-automatically when it exists, otherwise they use the pre-trained base model.
+## Local model workflow
 
-## API
+`translate MODEL TEXT...` and `train MODEL DATA OUTPUT` require the optional `ml` extra and a trusted local Marian directory containing tokenizer/config files and safetensors weights. Both loading calls use `local_files_only=True`; no model is selected or downloaded automatically. Pickle model weights and remote-code loading are not supported. Do not point at untrusted artifacts.
 
-| Method | Path         | Description                                  |
-| ------ | ------------ | -------------------------------------------- |
-| GET    | `/health`    | Liveness and whether the model is loaded     |
-| POST   | `/translate` | `{"texts": ["..."]}` → `{"translations": [...], "model": "..."}` |
+Use `enfr-translator translate --help` and `enfr-translator train --help` for arguments. The tested end-to-end example is the synthetic offline test below, not a downloaded model demonstration. A user-supplied pretrained model's language direction and license remain the user's responsibility.
 
-Error codes: `422` for an empty/blank/oversized batch, `413` for a text over the character limit.
-Interactive docs are at `/docs`.
+- CPU-only inference, deterministic beam search, bounded input count and lengths.
+- Target tokenizer mode, dynamic batch padding, target pad labels set to `-100`.
+- Seeded source-disjoint split before fitting. Normalized duplicates are rejected.
+- Explicit training with finite-loss checks; no auto-training on import or overwrite of existing output directories.
+- Token-count-weighted teacher-forced validation loss, not BLEU or a translation-quality claim.
 
-## Configuration
+The model/tokenizer architecture comes from the supplied local artifact. No pretrained artifact is bundled or selected automatically. The supplied model determines the actual language direction, so inspect it before using it for English/French. Truncation can discard long-text information. Source-disjoint splitting is not document/source/domain independence and is not an untouched evaluation set.
 
-Environment variables (see `.env.example`):
+## Checks
 
-| Variable               | Default                      | Purpose                              |
-| ---------------------- | ---------------------------- | ------------------------------------ |
-| `ENFR_BASE_MODEL`      | `Helsinki-NLP/opus-mt-en-fr` | Pre-trained model                    |
-| `ENFR_MODEL_DIR`       | `models/enfr-finetuned`      | Fine-tuned model location            |
-| `ENFR_NUM_BEAMS`       | `4`                          | Beam search width                    |
-| `ENFR_MAX_LENGTH`      | `128`                        | Max tokens in/out                    |
-| `ENFR_BATCH_SIZE`      | `16`                         | Inference batch size                 |
-| `ENFR_MAX_BATCH_ITEMS` | `32`                         | Max texts per API request            |
-| `ENFR_MAX_CHARS`       | `1000`                       | Max characters per text              |
-| `ENFR_LOG_LEVEL`       | `INFO`                       | Logging level                        |
-
-## Project layout
-
-```
-src/enfr_translator/   config, data, train, evaluate, translate, api, cli
-tests/                 pytest suite
-examples/sample.csv    tiny dataset for smoke tests
-Dockerfile, docker-compose.yml, Makefile, .github/workflows/ci.yml
+```sh
+HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 OMP_NUM_THREADS=1 uv run pytest --cov=enfr_translator --cov-report=term-missing
+uv run ruff check src tests
+uv run ruff format --check src tests
+uv run mypy src
+uv run pre-commit run --all-files
+uv run python -m enfr_translator --help
 ```
 
-## Development
+With the ML extra: **24 tests, 96% coverage**, including actual tiny random Marian forward/backward, local synthetic SentencePiece, target padding, one-epoch training, CLI inference, and safetensors save/load. This proves pipeline wiring, not translation quality. With only the light dependencies, backend tests are explicitly skipped. No real corpus fine-tuning, pretrained translation benchmark, BLEU, chrF or human evaluation was run.
 
-```bash
-make install   # editable install with all extras
-make lint      # ruff check + format check
-make test      # pytest
+## Docker
+
+```sh
+docker build --tag enfr-translator:ci .
+docker run --rm enfr-translator:ci --help
+docker run --rm -v "$PWD/examples/parallel.csv:/data.csv:ro" enfr-translator:ci check-data --data /data.csv
 ```
 
-## License
+Multi-stage slim image, non-root runtime, no dev or ML dependencies. The container checks data, it does not translate or train. Hosted CI runs these build/run checks; see [verification](docs/verification.md) for the evidence boundary. No paid APIs, hosted training, self-hosted runners or deployment are configured. The workflow is restricted to public repositories and ordinary GitHub-hosted Linux runners.
 
-MIT, see [LICENSE](LICENSE).
+## Layout and data flow
+
+```text
+CSV -> core.read_pairs -> source-disjoint split -> explicit CPU train
+local safetensors + tokenizer -> model.encode / translate -> JSON
+Typer CLI -> input validation -> core/model -> separate errors on stderr
+```
+
+`src/enfr_translator/core.py` owns CSV and split rules; `model.py` owns lazy ML loading, encoding, training and inference; `cli.py` is the interface. Tests build invented data and a random miniature model locally, with hub access disabled. CI uses pinned direct requirements via pip, while local reproduction uses `uv.lock`; pip is not claimed to enforce the full transitive uv lock.
+
+## Existing interface changes and limits
+
+The old README advertised `enfr train | evaluate | translate | serve`, automatic Helsinki-NLP model download, API endpoints and BLEU/chrF evaluation. No corresponding source, tests or sample CSV were tracked. Those claims were not working behavior to preserve. This pass implements `enfr check-data`, explicit `enfr train`, and `enfr translate`, **not** `serve` or `evaluate`. It does not make an untrained model bilingual by naming the repository English/French. You must supply a suitable trusted local Marian model.
+
+`docker-compose.yml` now runs a mounted data check, not a nonexistent API. The existing MIT license is preserved. `make install`, `make lint`, `make test`, and `make check` map to the documented commands. `requirements.txt` points to the base package rather than duplicating a second dependency list.
+
+Next work: evaluate a licensed, appropriate pretrained local model on a genuinely untouched bilingual test set, inspect generated translations and failure modes, add length/domain slices, and measure BLEU/chrF with exact versions and signatures. No English/French model-quality, broad platform compatibility or production-readiness is claimed.
+
+See [verification and phase notes](docs/verification.md), [changelog](CHANGELOG.md), and [copy-only GitHub presentation](docs/presentation.md). This review branch does not change the repository license, create a release/tag, merge main, or publish model/data artifacts.
