@@ -32,9 +32,9 @@ jobs:
       - name: Offline tests with real synthetic Marian backend
         run: uv run --no-sync python -m pytest --cov=enfr_translator --cov-report=term-missing
       - name: Lint
-        run: uv run --no-sync python -m ruff check src tests
+        run: uv run --no-sync python -m ruff check src tests scripts/demo.py
       - name: Format
-        run: uv run --no-sync python -m ruff format --check src tests
+        run: uv run --no-sync python -m ruff format --check src tests scripts/demo.py
       - name: Types
         run: uv run --no-sync python -m mypy src
       - name: Pre-commit
@@ -52,3 +52,9 @@ jobs:
         run: |
           docker run --rm enfr-translator:ci --help
           docker run --rm -v "$PWD/examples/parallel.csv:/data.csv:ro" enfr-translator:ci check-data --data /data.csv
+      - name: Standalone synthetic demo
+        run: uv run --no-sync python scripts/demo.py /tmp/standalone-synthetic-demo
+      - name: Opt-in locked CPU ML container
+        run: |
+          docker build -f Dockerfile.ml --tag synthetic-ml:ci .
+          docker run --rm --network none synthetic-ml:ci
