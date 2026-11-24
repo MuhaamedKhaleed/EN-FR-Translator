@@ -1,0 +1,26 @@
+{
+  "real_pretrained_model": true,
+  "source": "https://huggingface.co/Helsinki-NLP/opus-mt-en-fr",
+  "revision": "dd7f6540a7a48a7f4db59e5c0b9c42c8eea67f18",
+  "license": "Apache2.0 model card",
+  "outputs": [
+    "Bonjour, comment allez-vous ?",
+    "Le train part \u00e0 midi.",
+    "Ce projet fonctionne sur un ordinateur portable."
+  ],
+  "elapsed_seconds": 3.93,
+  "limits": "Initial larger retained-model process was killed; separate batch1 8train/4dev run succeeded. Not a benchmark.",
+  "tiny_finetune": {
+    "training": {
+      "validation_loss": 1.0770630151033402,
+      "validation_target_tokens": 20,
+      "validation_pairs": 4
+    },
+    "elapsed_seconds": 12.162368297576904,
+    "train_pairs": 8,
+    "dev_pairs": 4,
+    "limits": "tiny CPU finetune path, not translation benchmark"
+  },
+  "parameterized_recipe_completed": true,
+  "memory_fix": "Released full corpus line list before model allocation, inference in a separate process."
+}
