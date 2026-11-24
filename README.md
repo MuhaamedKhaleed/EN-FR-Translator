@@ -83,3 +83,7 @@ The old README advertised `enfr train | evaluate | translate | serve`, automatic
 Next work: evaluate a licensed, appropriate pretrained local model on a genuinely untouched bilingual test set, inspect generated translations and failure modes, add length/domain slices, and measure BLEU/chrF with exact versions and signatures. No English/French model-quality, broad platform compatibility or production-readiness is claimed.
 
 See [verification and phase notes](docs/verification.md), [changelog](CHANGELOG.md), and [copy-only GitHub presentation](docs/presentation.md). This review branch does not change the repository license, create a release/tag, merge main, or publish model/data artifacts.
+
+## Checked synthetic wiring demo
+
+See [commands, saved output and scope](docs/synthetic-demo.md). This is invented-input execution evidence, not model accuracy or a real-data gallery.
