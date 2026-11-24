@@ -1,22 +1,11 @@
-.PHONY: install lint format test serve train docker
-
+.PHONY: install test lint check
 install:
-	pip install -e ".[train,api,dev]"
-
-lint:
-	ruff check . && ruff format --check .
-
-format:
-	ruff check --fix . && ruff format .
-
+	uv sync --locked --extra dev --extra ml
 test:
-	pytest
-
-serve:
-	enfr serve
-
-train:
-	enfr train --data $(DATA) --epochs 1
-
-docker:
-	docker compose up --build
+	HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 OMP_NUM_THREADS=1 uv run pytest --cov=enfr_translator --cov-report=term-missing
+lint:
+	uv run ruff check src tests
+	uv run ruff format --check src tests
+	uv run mypy src
+check: lint test
+	uv run pre-commit run --all-files
