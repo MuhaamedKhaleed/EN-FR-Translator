@@ -1,0 +1,15 @@
+{
+  "synthetic_only": true,
+  "scope": "invented_bilingual_strings_random_Marian_not_translation_quality",
+  "quality_claim": false,
+  "result": {
+    "training": {
+      "validation_loss": 3.4386916160583496,
+      "validation_target_tokens": 10,
+      "validation_pairs": 1
+    },
+    "prediction": [
+      "bbrkkbb"
+    ]
+  }
+}
