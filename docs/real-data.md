@@ -37,3 +37,15 @@ docker run --rm --network none project-ml
 The image also includes `/app/scripts`. After explicit source preparation on the host, mount a new writable working directory and invoke the real script with `--entrypoint python`. Keep model/source mounts read-only when the script does not write beside them. The image uses uid10001, so grant that uid write access to the output folder, do not run the container as root to bypass this. Data/preprocessing scripts currently place artifacts beside source files; mount the working copy read-write and keep your original untouched. The environment disables Hugging Face downloads. Network-none is suitable only after sources/models are local; an explicit fetch helper needs network by design. CPU/dependency builds were checked on GitHub's Linux runner, not every laptop OS.
 
 Live recheck: official pinned model files downloaded and converted, but ManyThings now returns HTTP406 for the corpus in this environment. The cached-source route using the verified archive completed; do not claim the full network recipe currently finishes. A user can obtain the same archive from the source page then use --cached with the official source model files, or use the generic repository German example with original Tatoeba exports. No unverified mirror fallback. The helper correctly fails closed on source errors.
+
+## Current complete network route: original French Tatoeba exports
+
+ManyThings returned406 on the live recheck. The default fetch helper now uses original Tatoeba French/English detailed exports and bilingual links instead. Sources https://downloads.tatoeba.org/exports/per_language/fra/ and https://downloads.tatoeba.org/exports/per_language/eng/ , terms https://tatoeba.org/en/terms_of_use . CC BY2 France author and sentence-ID credit is retained, alongside exact source hashes. French model source/license is unchanged. Do not use the older ManyThings command with this new source folder; that older recipe still accepts a separately cached verified archive.
+
+```sh
+uv run --no-sync python scripts/fetch_real_data.py --output ./french-source
+uv run --no-sync python scripts/prepare_french.py --data ./french-source --output ./french-pairs
+uv run --no-sync python scripts/train_french.py --model ./french-source --data ./french-pairs/pairs.json --output ./french-model
+```
+
+About300MB model plus53MB compressed source exports, dependencies/checkpoints extra. First12 linked unique sentence IDs,8training/4development, not held-out benchmark or pretraining-overlap guarantee. Actual Tatoeba-only training completed; teacher-forced loss is in french-tatoeba-output.json. No sentences/model committed.
