@@ -31,7 +31,7 @@ uv sync --locked --extra dev --extra ml
 
 `translate MODEL TEXT...` and `train MODEL DATA OUTPUT` require the optional `ml` extra and a trusted local Marian directory containing tokenizer/config files and safetensors weights. Both loading calls use `local_files_only=True`; no model is selected or downloaded automatically. Pickle model weights and remote-code loading are not supported. Do not point at untrusted artifacts.
 
-Use `enfr-translator translate --help` and `enfr-translator train --help` for arguments. The tested end-to-end example is the synthetic offline test below, not a downloaded model demonstration. A user-supplied pretrained model's language direction and license remain the user's responsibility.
+Use `enfr translate --help` and `enfr train --help` for arguments. The tested end-to-end example is the synthetic offline test below, not a downloaded model demonstration. A user-supplied pretrained model's language direction and license remain the user's responsibility.
 
 - CPU-only inference, deterministic beam search, bounded input count and lengths.
 - Target tokenizer mode, dynamic batch padding, target pad labels set to `-100`.
