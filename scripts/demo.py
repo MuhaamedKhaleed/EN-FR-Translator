@@ -86,7 +86,7 @@ def main() -> None:
         )
     ]
     scores = train(base, pairs, validation, out / "model", 1, 2, 24)
-    predictions = translate(out / "model", ["hello world"], 8, 1)
+    predictions = translate(out / "model", ["hello world"], 24, 1)
     assert len(predictions) == 1 and isinstance(predictions[0], str)
     result = {"training": scores, "prediction": predictions}
     scope = "invented_bilingual_strings_random_Marian_not_translation_quality"
