@@ -95,3 +95,8 @@ See [actual results, source terms and explicit download/preparation commands](do
 ## Measured CPU quality follow-up
 
 See [quality experiments, results and limits](docs/quality-cpu.md). These go beyond wiring smokes; some improve measured results, while others expose overfit or a stronger simple baseline. No quality guarantee.
+
+
+## Reliability follow-up
+
+See [new ordinary-use safeguards and limits](docs/fix-pass.md). Model-quality scores are unchanged.
