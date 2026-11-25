@@ -62,9 +62,14 @@ def translate(
         raise ValueError("Max length must be [2,512], beams [1,8].")
     torch, model, tokenizer = load(directory)
     model.eval()
-    inputs = tokenizer(
-        texts, return_tensors="pt", padding=True, truncation=True, max_length=max_length
-    )
+    # Do not silently translate only a prefix of a long user document.
+    lengths = tokenizer(texts, truncation=False, padding=False)["input_ids"]
+    if any(len(tokens) > max_length for tokens in lengths):
+        raise ValueError(
+            "Input exceeds max-length tokens. Split text explicitly or raise "
+            "max-length within the supported limit; no silent truncation."
+        )
+    inputs = tokenizer(texts, return_tensors="pt", padding=True, truncation=False)
     with torch.inference_mode():
         output = model.generate(
             **inputs, max_new_tokens=max_length, num_beams=beams, do_sample=False
