@@ -2,6 +2,19 @@
 
 A local-only CLI for checking parallel CSV data, running an existing Marian translation model, and deliberately starting CPU fine-tuning. The repository previously advertised an implementation absent from its tracked source. This pass supplies a working local package and replaces unsupported API/evaluation claims with tested behavior. No pretrained model or corpus is bundled.
 
+## Real-data quickstart (about 3 minutes)
+
+Needs Python 3.11 or 3.12 (the locked PyTorch/TensorFlow wheels have no 3.13+ build); `--python 3.11` makes uv fetch it. Needs internet for the first install and downloads, and roughly 2 GB of free RAM.
+
+```sh
+uv sync --python 3.11 --locked --extra dev --extra ml
+uv run --no-sync python scripts/fetch_real_data.py --output ./real-source      # pinned Helsinki-NLP opus-mt-en-fr (~300 MB) + Tatoeba exports
+uv run --no-sync enfr translate ./real-source "The weather is nice today." "Where is the train station?"
+uv run --no-sync python scripts/prepare_french.py --data ./real-source --output ./french-pairs
+uv run --no-sync python scripts/train_french.py --model ./real-source --data ./french-pairs/pairs.json --output ./french-model
+```
+Output: real French translations from the pretrained model (on 25 Nov 2026: "Le temps est beau aujourd'hui.", "Où est la gare ?"), then a fine-tuned copy in `french-model`. The bundled fine-tune only uses 12 sentence pairs, so it is a wiring demo; to improve it, build your own `source,target` CSV and run `enfr train ./real-source YOUR.csv ./my-model --epochs N`. The older `real_data.py` ManyThings route in `docs/real-data.md` is not the supported path.
+
 ## Quick start
 
 Python 3.11 or 3.12, Linux x86_64. Install uv first using its official instructions, then:
