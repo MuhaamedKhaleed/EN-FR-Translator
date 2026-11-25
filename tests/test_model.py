@@ -72,7 +72,7 @@ def test_actual_target_padding_loss_and_generation(artifact: Path) -> None:
     loss = model(**batch).loss
     assert bool(torch.isfinite(loss))
     loss.backward()
-    result = translate(artifact, ["hello world", "thanks"], 8, 1)
+    result = translate(artifact, ["hello world", "thanks"], 24, 1)
     assert len(result) == 2 and all(isinstance(t, str) for t in result)
 
 
@@ -167,3 +167,8 @@ def test_encode_calls_target_mode() -> None:
 
     result = encode([("source sentence", "target sentence")], Tokenizer())
     assert result["labels"].tolist() == [[3, -100]]
+
+
+def test_translation_refuses_silent_prefix_truncation(artifact: Path) -> None:
+    with pytest.raises(ValueError, match="no silent truncation"):
+        translate(artifact, ["hello world " * 30], 8, 1)
