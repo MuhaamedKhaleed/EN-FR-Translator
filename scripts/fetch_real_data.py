@@ -59,12 +59,12 @@ SOURCES = [
     (
         "config.json",
         "https://huggingface.co/Helsinki-NLP/opus-mt-en-fr/resolve/dd7f6540a7a48a7f4db59e5c0b9c42c8eea67f18/config.json",
-        "62eb1ac08f8c7b047fad7ac3a41e769f375bdfa5c08cfb25ed20b7956284b415",
+        "df92c371911b45282caac6101fe7e7f5d5e9af7f9a99356067ffe306278ce72b",
     ),
     (
         "generation_config.json",
         "https://huggingface.co/Helsinki-NLP/opus-mt-en-fr/resolve/dd7f6540a7a48a7f4db59e5c0b9c42c8eea67f18/generation_config.json",
-        "33090cbaa9f66b89b0332b8583ff8ddb1fee6d15b401041a5fbb7d022f2d0c96",
+        "4956fb9a7caaad7579cf8bb789c1e578b8a1cf48a0a8b779fda2f95dd10bbaa5",
     ),
     (
         "pytorch_model.bin",
@@ -92,9 +92,19 @@ SOURCES = [
         "945c604346ce15ce4aff9001001e7f925e336d942c4087017f191871162cbdc4",
     ),
     (
-        "fra-eng.zip",
-        "https://www.manythings.org/anki/fra-eng.zip",
-        "9e35994767f7307dc1fa9d5efcc36681f3756a1bdaaa02c1381b3eb11461261e",
+        "fra_sentences_detailed.tsv.bz2",
+        "https://downloads.tatoeba.org/exports/per_language/fra/fra_sentences_detailed.tsv.bz2",
+        "3d7feee8d677b24233be6955018fcac5e9f4fc1c06327b25f4479cc1d162a8bb",
+    ),
+    (
+        "eng_sentences_detailed.tsv.bz2",
+        "https://downloads.tatoeba.org/exports/per_language/eng/eng_sentences_detailed.tsv.bz2",
+        "3a0e7a2fdd7cbad76f226de4c28371a15a2fc4d115001617288b16a35c6293db",
+    ),
+    (
+        "fra-eng_links.tsv.bz2",
+        "https://downloads.tatoeba.org/exports/per_language/fra/fra-eng_links.tsv.bz2",
+        "1c6421927725d67cd87f39c3176e18623927c4cda9797dd87ca9a18830fb463d",
     ),
 ]
 
