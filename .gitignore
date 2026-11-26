@@ -1,45 +1,41 @@
-# Byte-compiled / optimized / DLL files
+.venv/
 __pycache__/
 *.py[cod]
-*$py.class
-
-# Virtual environments
-env/
-venv/
-ENV/
 .env
-
-# Model weights, checkpoints, and outputs
+.env.*
+!.env.example
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage*
+htmlcov/
+build/
+dist/
+*.egg-info/
+.pre-commit-cache/
 results/
-models/
-runs/
+logs/
+*.safetensors
+*.bin
+*.pt
+*.csv
+*.zip
+
+*.joblib
+*.pkl
+kaggle.json
+
+*.keras
+*.h5
+artifacts/
+poem.txt
+
+*.safetensors
+*.bin
 *.pt
 *.pth
-*.bin
-*.safetensors
+artifacts/
+models/
 
-# Dataset files
-*.csv
-*.tsv
-*.jsonl
-data/
-
-# Jupyter Notebook checkpoints
-.ipynb_checkpoints
-
-# Hugging Face cache
-.cache/
-
-# Logs
-*.log
-
-# OS-generated files
-.DS_Store
-Thumbs.db
-
-# IDE configs
-.idea/
-.vscode/
-*.swp
-# Keep the tiny sample dataset
-!examples/*.csv
+!examples/
+!examples/parallel.csv

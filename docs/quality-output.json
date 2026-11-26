@@ -1,0 +1,20 @@
+{
+  "source": "https://downloads.tatoeba.org/exports/per_language/fra/",
+  "model_source": "https://huggingface.co/Helsinki-NLP/opus-mt-en-fr",
+  "train_pairs": 16,
+  "development_pairs": 16,
+  "test_pairs": 16,
+  "history": [
+    {
+      "epoch": 1,
+      "development_token_loss": 0.5913729238670503
+    }
+  ],
+  "test_before_chrf": 74.98800785404424,
+  "test_after_chrf": 75.4729963540323,
+  "test_before_bleu": 59.476817937930754,
+  "test_after_bleu": 59.71392362806765,
+  "elapsed_seconds": 27.20052218437195,
+  "peak_rss_kb": 1767360,
+  "limits": "Same named test used for before/after fixed devselected experiment, no testdriven tuning. Tatoebapretraining overlap unknown, not externalbenchmark. Model may alreadyknowthese sentences, no generalizationclaim."
+}

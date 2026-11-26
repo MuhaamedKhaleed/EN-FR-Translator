@@ -1,0 +1,51 @@
+# Real English-French CPU path
+
+A real pretrained Helsinki-NLP/opus-mt-en-fr checkpoint ran CPU inference, followed by an 8pair training/4pair development fine-tune with batch1. Actual results are in real-data-output.json. This is an English-French example even in the generic translation repo; it does not establish German-model quality. The first larger process retained two model copies and was killed for memory, while the isolated small run succeeded. No RAM minimum is asserted from this one environment. No weights or corpus are committed.
+
+Model source: https://huggingface.co/Helsinki-NLP/opus-mt-en-fr , revision dd7f6540a7a48a7f4db59e5c0b9c42c8eea67f18, model card Apache2.0. Official main supplied pytorch_model.bin, not safetensors. The executor converted that exact official tensor state using torch.load(weights_only=True), tied missing lm_head to the shared embedding, and saved safetensors. No unrestricted pickle load or remote model code. The supported package itself still refuses pickle weights. The explicit helper downloads exactly pinned official bytes, verifies SHA-256 before tensor-only conversion, permits only the known missing tied lm_head key and deletes the pickle file afterward. This conversion is separate from training; never use it on an arbitrary checkpoint.
+
+Dataset source: https://www.manythings.org/anki/ , fra-eng.zip, Tatoeba CC BY2.0 France with sentence-level attribution. Keep the third column and original readme/license. The script keeps attribution alongside results and does not republish sentences. Twelve first normalized-unique sources are an illustrative development slice; pretrained overlap is unknown. Not an untouched BLEU/chrF benchmark.
+
+```sh
+uv sync --locked --extra dev --extra ml
+uv run --no-sync python scripts/real_data.py --model LOCAL_SAFETENSORS_MODEL --data LOCAL_FRA_ENG_ZIP --output NEW_OUTPUT
+```
+
+The published recipe now frees unused corpus lines before allocating model and optimizer state. Training and inference run in separate processes. The actual parameterized recipe completed in both packages after that memory-lifecycle fix.
+
+Locked fresh environments passed all package tests. The explicit fetch helper now handles pinned download and conversion. It is never invoked on import/install. No RAM minimum is established; larger batches exhausted this environment. A generic package's real German model/corpus run remains separate.
+
+## Explicit source preparation
+
+```sh
+uv sync --locked --extra dev --extra ml
+uv run --no-sync python scripts/fetch_real_data.py --output ./real-source
+uv run --no-sync python scripts/real_data.py --model ./real-source --data ./real-source/fra-eng.zip --output ./real-finetune
+```
+
+The download is about300MB model bytes plus the8MB corpus; dependencies and output checkpoints need additional disk/RAM. Output directory must be new. Hash changes fail closed. `--cached /path/to/source-files` avoids network but still checks every file; the cached folder must have the official pytorch_model.bin plus tokenizer/config and fra-eng.zip. Data/model rights are separate from this repo's MIT code. The source corpus retains per-sentence attribution and its readme in the original archive. No benchmark or unseen-data claim.
+
+## Docker without a registry account
+
+This repository supplies a Dockerfile, not a published registry image. Build locally once. The default remains the small invented-input wiring demo. No account, paid service or automatic source download is required by the image.
+
+```sh
+docker build -f Dockerfile.ml -t project-ml .
+docker run --rm --network none project-ml
+```
+
+The image also includes `/app/scripts`. After explicit source preparation on the host, mount a new writable working directory and invoke the real script with `--entrypoint python`. Keep model/source mounts read-only when the script does not write beside them. The image uses uid10001, so grant that uid write access to the output folder, do not run the container as root to bypass this. Data/preprocessing scripts currently place artifacts beside source files; mount the working copy read-write and keep your original untouched. The environment disables Hugging Face downloads. Network-none is suitable only after sources/models are local; an explicit fetch helper needs network by design. CPU/dependency builds were checked on GitHub's Linux runner, not every laptop OS.
+
+Live recheck: official pinned model files downloaded and converted, but ManyThings now returns HTTP406 for the corpus in this environment. The cached-source route using the verified archive completed; do not claim the full network recipe currently finishes. A user can obtain the same archive from the source page then use --cached with the official source model files, or use the generic repository German example with original Tatoeba exports. No unverified mirror fallback. The helper correctly fails closed on source errors.
+
+## Current complete network route: original French Tatoeba exports
+
+ManyThings returned406 on the live recheck. The default fetch helper now uses original Tatoeba French/English detailed exports and bilingual links instead. Sources https://downloads.tatoeba.org/exports/per_language/fra/ and https://downloads.tatoeba.org/exports/per_language/eng/ , terms https://tatoeba.org/en/terms_of_use . CC BY2 France author and sentence-ID credit is retained, alongside exact source hashes. French model source/license is unchanged. Do not use the older ManyThings command with this new source folder; that older recipe still accepts a separately cached verified archive.
+
+```sh
+uv run --no-sync python scripts/fetch_real_data.py --output ./french-source
+uv run --no-sync python scripts/prepare_french.py --data ./french-source --output ./french-pairs
+uv run --no-sync python scripts/train_french.py --model ./french-source --data ./french-pairs/pairs.json --output ./french-model
+```
+
+About300MB model plus53MB compressed source exports, dependencies/checkpoints extra. First12 linked unique sentence IDs,8training/4development, not held-out benchmark or pretraining-overlap guarantee. Actual Tatoeba-only training completed; teacher-forced loss is in french-tatoeba-output.json. No sentences/model committed.
