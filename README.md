@@ -1,115 +1,38 @@
 # English/French Local Translator
 
-A local-only CLI for checking parallel CSV data, running an existing Marian translation model, and deliberately starting CPU fine-tuning. The repository previously advertised an implementation absent from its tracked source. This pass supplies a working local package and replaces unsupported API/evaluation claims with tested behavior. No pretrained model or corpus is bundled.
+A local CLI for validating parallel CSV data, translating with a local Marian model, and running explicit CPU fine-tuning. Built from an English/French translation project whose advertised API/evaluation features were never in the tracked source; this version replaces those claims with tested behavior.
 
-## Real-data quickstart (about 3 minutes)
+## Results (honest)
 
-Needs Python 3.11 or 3.12 (the locked PyTorch/TensorFlow wheels have no 3.13+ build); `--python 3.11` makes uv fetch it. Needs internet for the first install and downloads, and roughly 2 GB of free RAM.
+- Fresh clone translates real sentences with a pinned public model (Helsinki-NLP `opus-mt-en-fr`, ~300 MB). Recorded 25 Nov 2026: "The weather is nice today." -> "Le temps est beau aujourd'hui.", "Where is the train station?" -> "Où est la gare ?".
+- The bundled fine-tune runs on 12 sentence pairs. It proves the train/save/reload wiring; it is not a quality improvement.
+- Validation metric is token-weighted teacher-forced loss. No BLEU, chrF, benchmark or human evaluation has been run.
+- 24 tests, 96% statement coverage (tiny random Marian forward/backward, synthetic SentencePiece, safetensors save/load). Coverage proves wiring, not translation quality.
+
+## Quickstart (fresh clone, about 3 minutes)
+
+Needs Python 3.11 or 3.12 (locked wheels have no 3.13+ build), Linux x86_64, internet for the first install/downloads, ~2 GB free RAM.
 
 ```sh
 uv sync --python 3.11 --locked --extra dev --extra ml
-uv run --no-sync python scripts/fetch_real_data.py --output ./real-source      # pinned Helsinki-NLP opus-mt-en-fr (~300 MB) + Tatoeba exports
+uv run --no-sync python scripts/fetch_real_data.py --output ./real-source      # pinned opus-mt-en-fr + Tatoeba exports
 uv run --no-sync enfr translate ./real-source "The weather is nice today." "Where is the train station?"
 uv run --no-sync python scripts/prepare_french.py --data ./real-source --output ./french-pairs
 uv run --no-sync python scripts/train_french.py --model ./real-source --data ./french-pairs/pairs.json --output ./french-model
 ```
-Output: real French translations from the pretrained model (on 25 Nov 2026: "Le temps est beau aujourd'hui.", "Où est la gare ?"), then a fine-tuned copy in `french-model`. The bundled fine-tune only uses 12 sentence pairs, so it is a wiring demo; to improve it, build your own `source,target` CSV and run `enfr train ./real-source YOUR.csv ./my-model --epochs N`. The older `real_data.py` ManyThings route in `docs/real-data.md` is not the supported path.
 
-## Quick start
+To fine-tune on your own data, build a `source,target` CSV and run `enfr train ./real-source YOUR.csv ./my-model --epochs N`.
 
-Python 3.11 or 3.12, Linux x86_64. Install uv first using its official instructions, then:
+Data checks run without the ML stack: `uv sync --locked --extra dev` then `enfr check-data --data examples/parallel.csv` returns `{"pairs": 3, "train_pairs": 2, "validation_pairs": 1}`.
 
-```sh
-uv sync --locked --extra dev
-uv run enfr --help
-uv run enfr check-data --data examples/parallel.csv
-uv run enfr check-data --config .env.example
-```
+## Limits
 
-Actual example output:
+- You must supply a trusted local Marian model (loaded with `local_files_only=True`); no model is bundled or auto-downloaded, and its language direction and license are your responsibility.
+- Source-disjoint splitting is not document/domain independence and not an untouched test set.
+- CPU-only, deterministic beam search, bounded input lengths; truncation can drop long-text information.
+- The old README's `serve`/`evaluate` commands and automatic downloads were advertised but never implemented; they are deliberately not reproduced.
+- Verified on Linux x86_64 only; the container runs data checks, not translation. Hosted CI (free public-repo runners) checks tests, lint, CLI and the Docker build.
 
-```json
-{"pairs": 3, "train_pairs": 2, "validation_pairs": 1}
-```
+## License
 
-`source,target` are required UTF-8 CSV headers. Other uniquely named columns are allowed. Blank pairs, malformed rows, and repeated case/whitespace-normalized source sentences fail rather than being silently dropped. `--config` is an opt-in dotenv file with `PARALLEL_CSV`; explicit `--data` wins. No credentials or service calls are needed.
-
-The lock is scoped to Linux x86_64. Other operating systems are not verified. The ordinary install and Docker image provide **data checks only**, with no Torch import. Optional ML dependencies are much larger:
-
-```sh
-uv sync --locked --extra dev --extra ml
-```
-
-## Local model workflow
-
-`translate MODEL TEXT...` and `train MODEL DATA OUTPUT` require the optional `ml` extra and a trusted local Marian directory containing tokenizer/config files and safetensors weights. Both loading calls use `local_files_only=True`; no model is selected or downloaded automatically. Pickle model weights and remote-code loading are not supported. Do not point at untrusted artifacts.
-
-Use `enfr translate --help` and `enfr train --help` for arguments. The offline tests use a tiny random model; the downloaded-model demonstration is the real-data quickstart above. A user-supplied pretrained model's language direction and license remain the user's responsibility.
-
-- CPU-only inference, deterministic beam search, bounded input count and lengths.
-- Target tokenizer mode, dynamic batch padding, target pad labels set to `-100`.
-- Seeded source-disjoint split before fitting. Normalized duplicates are rejected.
-- Explicit training with finite-loss checks; no auto-training on import or overwrite of existing output directories.
-- Token-count-weighted teacher-forced validation loss, not BLEU or a translation-quality claim.
-
-The model/tokenizer architecture comes from the supplied local artifact. No pretrained artifact is bundled or selected automatically. The supplied model determines the actual language direction; the quickstart's pinned opus-mt-en-fr model is English to French. Truncation can discard long-text information. Source-disjoint splitting is not document/source/domain independence and is not an untouched evaluation set.
-
-## Checks
-
-```sh
-HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 OMP_NUM_THREADS=1 uv run pytest --cov=enfr_translator --cov-report=term-missing
-uv run ruff check src tests
-uv run ruff format --check src tests
-uv run mypy src
-uv run pre-commit run --all-files
-uv run python -m enfr_translator --help
-```
-
-With the ML extra: **24 tests, 96% coverage**, including actual tiny random Marian forward/backward, local synthetic SentencePiece, target padding, one-epoch training, CLI inference, and safetensors save/load. This proves pipeline wiring, not translation quality. With only the light dependencies, backend tests are explicitly skipped. No real-corpus fine-tuning beyond the 12-pair wiring demo, translation benchmark, BLEU, chrF or human evaluation was run.
-
-## Docker
-
-```sh
-docker build --tag enfr-translator:ci .
-docker run --rm enfr-translator:ci --help
-docker run --rm -v "$PWD/examples/parallel.csv:/data.csv:ro" enfr-translator:ci check-data --data /data.csv
-```
-
-Multi-stage slim image, non-root runtime, no dev or ML dependencies. The container checks data, it does not translate or train. Hosted CI runs these build/run checks; see [verification](docs/verification.md) for the evidence boundary. No paid APIs, hosted training, self-hosted runners or deployment are configured. The workflow is restricted to public repositories and ordinary GitHub-hosted Linux runners.
-
-## Layout and data flow
-
-```text
-CSV -> core.read_pairs -> source-disjoint split -> explicit CPU train
-local safetensors + tokenizer -> model.encode / translate -> JSON
-Typer CLI -> input validation -> core/model -> separate errors on stderr
-```
-
-`src/enfr_translator/core.py` owns CSV and split rules; `model.py` owns lazy ML loading, encoding, training and inference; `cli.py` is the interface. Tests build invented data and a random miniature model locally, with hub access disabled. CI uses pinned direct requirements via pip, while local reproduction uses `uv.lock`; pip is not claimed to enforce the full transitive uv lock.
-
-## Existing interface changes and limits
-
-The old README advertised `enfr train | evaluate | translate | serve`, automatic Helsinki-NLP model download, API endpoints and BLEU/chrF evaluation. No corresponding source, tests or sample CSV were tracked. Those claims were not working behavior to preserve. This pass implements `enfr check-data`, explicit `enfr train`, and `enfr translate`, **not** `serve` or `evaluate`. It does not make an untrained model bilingual by naming the repository English/French. You must supply a suitable trusted local Marian model.
-
-`docker-compose.yml` now runs a mounted data check, not a nonexistent API. The MIT license is kept. `make install`, `make lint`, `make test`, and `make check` map to the documented commands. `requirements.txt` points to the base package rather than duplicating a second dependency list.
-
-Next work: evaluate a licensed, appropriate pretrained local model on a genuinely untouched bilingual test set, inspect generated translations and failure modes, add length/domain slices, and measure BLEU/chrF with exact versions and signatures. No English/French model-quality, broad platform compatibility or production-readiness is claimed.
-
-See [verification and phase notes](docs/verification.md), [changelog](CHANGELOG.md), and [copy-only GitHub presentation](docs/presentation.md). No release/tag is created and no model or data artifacts are published.
-
-## Checked synthetic wiring demo
-
-See [commands, saved output and scope](docs/synthetic-demo.md). This is invented-input execution evidence, not model accuracy or a real-data gallery.
-
-## Real-data CPU example
-
-See [actual results, source terms and explicit download/preparation commands](docs/real-data.md). These are small development runs, not accuracy or production guarantees. No model/data is committed.
-
-## Measured CPU quality follow-up
-
-See [quality experiments, results and limits](docs/quality-cpu.md). These go beyond wiring smokes; some improve measured results, while others expose overfit or a stronger simple baseline. No quality guarantee.
-
-
-## Reliability follow-up
-
-See [new ordinary-use safeguards and limits](docs/fix-pass.md). Model-quality scores are unchanged.
+MIT for the new project-owned code (see `LICENSE` and `LICENSE-SCOPE.md`). Historical notebooks, third-party models, datasets and corpora keep their own terms; no rights clearance is claimed for them. Details and evidence: `docs/verification.md`, `docs/real-data.md`, `CHANGELOG.md`.
