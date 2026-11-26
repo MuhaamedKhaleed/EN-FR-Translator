@@ -44,7 +44,7 @@ uv sync --locked --extra dev --extra ml
 
 `translate MODEL TEXT...` and `train MODEL DATA OUTPUT` require the optional `ml` extra and a trusted local Marian directory containing tokenizer/config files and safetensors weights. Both loading calls use `local_files_only=True`; no model is selected or downloaded automatically. Pickle model weights and remote-code loading are not supported. Do not point at untrusted artifacts.
 
-Use `enfr translate --help` and `enfr train --help` for arguments. The tested end-to-end example is the synthetic offline test below, not a downloaded model demonstration. A user-supplied pretrained model's language direction and license remain the user's responsibility.
+Use `enfr translate --help` and `enfr train --help` for arguments. The offline tests use a tiny random model; the downloaded-model demonstration is the real-data quickstart above. A user-supplied pretrained model's language direction and license remain the user's responsibility.
 
 - CPU-only inference, deterministic beam search, bounded input count and lengths.
 - Target tokenizer mode, dynamic batch padding, target pad labels set to `-100`.
@@ -52,7 +52,7 @@ Use `enfr translate --help` and `enfr train --help` for arguments. The tested en
 - Explicit training with finite-loss checks; no auto-training on import or overwrite of existing output directories.
 - Token-count-weighted teacher-forced validation loss, not BLEU or a translation-quality claim.
 
-The model/tokenizer architecture comes from the supplied local artifact. No pretrained artifact is bundled or selected automatically. The supplied model determines the actual language direction, so inspect it before using it for English/French. Truncation can discard long-text information. Source-disjoint splitting is not document/source/domain independence and is not an untouched evaluation set.
+The model/tokenizer architecture comes from the supplied local artifact. No pretrained artifact is bundled or selected automatically. The supplied model determines the actual language direction; the quickstart's pinned opus-mt-en-fr model is English to French. Truncation can discard long-text information. Source-disjoint splitting is not document/source/domain independence and is not an untouched evaluation set.
 
 ## Checks
 
@@ -65,7 +65,7 @@ uv run pre-commit run --all-files
 uv run python -m enfr_translator --help
 ```
 
-With the ML extra: **24 tests, 96% coverage**, including actual tiny random Marian forward/backward, local synthetic SentencePiece, target padding, one-epoch training, CLI inference, and safetensors save/load. This proves pipeline wiring, not translation quality. With only the light dependencies, backend tests are explicitly skipped. No real corpus fine-tuning, pretrained translation benchmark, BLEU, chrF or human evaluation was run.
+With the ML extra: **24 tests, 96% coverage**, including actual tiny random Marian forward/backward, local synthetic SentencePiece, target padding, one-epoch training, CLI inference, and safetensors save/load. This proves pipeline wiring, not translation quality. With only the light dependencies, backend tests are explicitly skipped. No real-corpus fine-tuning beyond the 12-pair wiring demo, translation benchmark, BLEU, chrF or human evaluation was run.
 
 ## Docker
 
@@ -91,11 +91,11 @@ Typer CLI -> input validation -> core/model -> separate errors on stderr
 
 The old README advertised `enfr train | evaluate | translate | serve`, automatic Helsinki-NLP model download, API endpoints and BLEU/chrF evaluation. No corresponding source, tests or sample CSV were tracked. Those claims were not working behavior to preserve. This pass implements `enfr check-data`, explicit `enfr train`, and `enfr translate`, **not** `serve` or `evaluate`. It does not make an untrained model bilingual by naming the repository English/French. You must supply a suitable trusted local Marian model.
 
-`docker-compose.yml` now runs a mounted data check, not a nonexistent API. The existing MIT license is preserved. `make install`, `make lint`, `make test`, and `make check` map to the documented commands. `requirements.txt` points to the base package rather than duplicating a second dependency list.
+`docker-compose.yml` now runs a mounted data check, not a nonexistent API. The MIT license is kept. `make install`, `make lint`, `make test`, and `make check` map to the documented commands. `requirements.txt` points to the base package rather than duplicating a second dependency list.
 
 Next work: evaluate a licensed, appropriate pretrained local model on a genuinely untouched bilingual test set, inspect generated translations and failure modes, add length/domain slices, and measure BLEU/chrF with exact versions and signatures. No English/French model-quality, broad platform compatibility or production-readiness is claimed.
 
-See [verification and phase notes](docs/verification.md), [changelog](CHANGELOG.md), and [copy-only GitHub presentation](docs/presentation.md). This review branch does not change the repository license, create a release/tag, merge main, or publish model/data artifacts.
+See [verification and phase notes](docs/verification.md), [changelog](CHANGELOG.md), and [copy-only GitHub presentation](docs/presentation.md). No release/tag is created and no model or data artifacts are published.
 
 ## Checked synthetic wiring demo
 
